@@ -4,10 +4,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-_KERAS_BACKEND = None
-_KERAS_LAYERS = None
-_KERAS_MODELS = None
-_KERAS_UTILS = None
+
+import keras
+_KERAS_BACKEND = keras.backend
+_KERAS_LAYERS = keras.layers
+_KERAS_MODELS = keras.models
+_KERAS_UTILS = keras.utils
+
+
 
 
 def set_keras_submodules(backend=None,
@@ -20,10 +24,15 @@ def set_keras_submodules(backend=None,
     global _KERAS_LAYERS
     global _KERAS_MODELS
     global _KERAS_UTILS
+    backend = keras.backend
+    layers = keras.layers
+    models = keras.models
+    utils = keras.utils
     _KERAS_BACKEND = backend
     _KERAS_LAYERS = layers
     _KERAS_MODELS = models
     _KERAS_UTILS = utils
+
 
 
 def get_keras_submodule(name):
@@ -60,6 +69,10 @@ def get_submodules_from_kwargs(kwargs):
     layers = kwargs.get('layers', _KERAS_LAYERS)
     models = kwargs.get('models', _KERAS_MODELS)
     utils = kwargs.get('utils', _KERAS_UTILS)
+    backend = keras.backend
+    layers = keras.layers
+    models = keras.models
+    utils = keras.utils
     for key in kwargs.keys():
         if key not in ['backend', 'layers', 'models', 'utils']:
             raise TypeError('Invalid keyword argument: %s', key)
@@ -98,6 +111,7 @@ __version__ = '1.0.7'
 from . import vgg16
 from . import vgg19
 from . import resnet50
+from .resnet_common import *
 from . import inception_v3
 from . import inception_resnet_v2
 from . import xception

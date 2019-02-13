@@ -278,6 +278,7 @@ def ResNet(stack_fn,
            input_shape=None,
            pooling=None,
            classes=1000,
+           initial_strides=2,
            **kwargs):
     """Instantiates the ResNet, ResNetV2, and ResNeXt architecture.
 
@@ -360,7 +361,7 @@ def ResNet(stack_fn,
     bn_axis = 3 if backend.image_data_format() == 'channels_last' else 1
 
     x = layers.ZeroPadding2D(padding=((3, 3), (3, 3)), name='conv1_pad')(img_input)
-    x = layers.Conv2D(64, 7, strides=2, use_bias=use_bias, name='conv1_conv')(x)
+    x = layers.Conv2D(64, 7, strides=initial_strides, use_bias=use_bias, name='conv1_conv')(x)
 
     if preact is False:
         x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
@@ -406,7 +407,7 @@ def ResNet(stack_fn,
             file_hash = WEIGHTS_HASHES[model_name][1]
         weights_path = keras_utils.get_file(file_name,
                                             BASE_WEIGHTS_PATH + file_name,
-                                            cache_subdir='models',
+                                            cache_subdir='data-tmp',
                                             file_hash=file_hash)
         model.load_weights(weights_path)
     elif weights is not None:
