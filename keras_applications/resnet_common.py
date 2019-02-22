@@ -92,6 +92,7 @@ def block1(x, filters, kernel_size=3, stride=1,
     x = layers.Activation('relu', name=name + '_1_relu')(x)
 
     x = layers.Conv2D(filters, kernel_size, padding='SAME',
+                      dilation_rate=(2, 2),
                       name=name + '_2_conv')(x)
     x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_2_bn')(x)
@@ -447,7 +448,7 @@ def ResNet101(include_top=True,
         x = stack1(x, 64, 3, stride1=1, name='conv2')
         x = stack1(x, 128, 4, name='conv3')
         x = stack1(x, 256, 23, name='conv4')
-        x = stack1(x, 512, 3, name='conv5')
+        x = stack1(x, 512, 3, stride1=1, name='conv5')
         return x
     return ResNet(stack_fn, False, True, 'resnet101',
                   include_top, weights,
