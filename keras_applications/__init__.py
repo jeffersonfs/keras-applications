@@ -4,8 +4,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from tensorflow.python import keras
 
-import keras
+# import tensorflow.python.keras as keras
+# import keras
 _KERAS_BACKEND = keras.backend
 _KERAS_LAYERS = keras.layers
 _KERAS_MODELS = keras.models
