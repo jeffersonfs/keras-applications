@@ -408,7 +408,6 @@ def ResNet(stack_fn,
             file_hash = WEIGHTS_HASHES[model_name][1]
         weights_path = keras_utils.get_file(file_name,
                                             BASE_WEIGHTS_PATH + file_name,
-                                            cache_subdir='/workspace/graph-cut-exp/data-tmp',
                                             file_hash=file_hash)
         model.load_weights(weights_path)
     elif weights is not None:
