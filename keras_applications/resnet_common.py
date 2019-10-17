@@ -61,7 +61,7 @@ WEIGHTS_HASHES = {
 
 
 def block1(x, filters, kernel_size=3, stride=1,
-           conv_shortcut=True, name=None):
+           conv_shortcut=True, dilation_rate=1, stride_dilation=1, name=None):
     """A residual block.
 
     # Arguments
@@ -86,13 +86,14 @@ def block1(x, filters, kernel_size=3, stride=1,
     else:
         shortcut = x
 
-    x = layers.Conv2D(filters, 1, strides=stride, name=name + '_1_conv')(x)
+    x = layers.Conv2D(filters, 1, strides=stride,  name=name + '_1_conv')(x)
     x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_1_bn')(x)
     x = layers.Activation('relu', name=name + '_1_relu')(x)
 
     x = layers.Conv2D(filters, kernel_size, padding='SAME',
-                      dilation_rate=(2, 2),
+                      dilation_rate=dilation_rate,
+                      strides=stride_dilation,
                       name=name + '_2_conv')(x)
     x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_2_bn')(x)
@@ -107,7 +108,7 @@ def block1(x, filters, kernel_size=3, stride=1,
     return x
 
 
-def stack1(x, filters, blocks, stride1=2, name=None):
+def stack1(x, filters, blocks, stride1=2, dilation_rate=1, name=None):
     """A set of stacked residual blocks.
 
     # Arguments
@@ -120,9 +121,15 @@ def stack1(x, filters, blocks, stride1=2, name=None):
     # Returns
         Output tensor for the stacked blocks.
     """
-    x = block1(x, filters, stride=stride1, name=name + '_block1')
+    x = block1(x, filters,
+               stride=stride1,
+               dilation_rate=dilation_rate,
+               name=name + '_block1')
     for i in range(2, blocks + 1):
-        x = block1(x, filters, conv_shortcut=False, name=name + '_block' + str(i))
+        x = block1(x, filters,
+                   conv_shortcut=False,
+                   dilation_rate=dilation_rate,
+                   name=name + '_block' + str(i))
     return x
 
 
@@ -435,6 +442,45 @@ def ResNet50(include_top=True,
                   pooling, classes,
                   **kwargs)
 
+
+def ResNet50Dilated(include_top=True,
+             weights='imagenet',
+             input_tensor=None,
+             input_shape=None,
+             pooling=None,
+             classes=1000,
+             **kwargs):
+    def stack_fn(x):
+        x = stack1(x, 64, 3, stride1=1, dilation_rate=2,  name='conv2')
+        x = stack1(x, 128, 4, stride1=2, dilation_rate=2, name='conv3')
+        x = stack1(x, 256, 6, stride1=2, dilation_rate=2, name='conv4')
+        x = stack1(x, 512, 3, stride1=1, dilation_rate=4, name='conv5')
+        return x
+    return ResNet(stack_fn, False, True, 'resnet50',
+                  include_top, weights,
+                  input_tensor, input_shape,
+                  pooling, classes,
+                  **kwargs)
+
+
+def ResNet101Dilated(include_top=True,
+              weights='imagenet',
+              input_tensor=None,
+              input_shape=None,
+              pooling=None,
+              classes=1000,
+              **kwargs):
+    def stack_fn(x):
+        x = stack1(x, 64, 3, stride1=1, dilation_rate=2, name='conv2')
+        x = stack1(x, 128, 4, stride1=2, dilation_rate=2, name='conv3')
+        x = stack1(x, 256, 23, stride1=2, dilation_rate=2, name='conv4')
+        x = stack1(x, 512, 3, stride1=1, dilation_rate=4, name='conv5')
+        return x
+    return ResNet(stack_fn, False, True, 'resnet101',
+                  include_top, weights,
+                  input_tensor, input_shape,
+                  pooling, classes,
+                  **kwargs)
 
 def ResNet101(include_top=True,
               weights='imagenet',
