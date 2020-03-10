@@ -442,6 +442,25 @@ def ResNet50(include_top=True,
                   pooling, classes,
                   **kwargs)
 
+def ResNet18Dilated(include_top=True,
+             weights='imagenet',
+             input_tensor=None,
+             input_shape=None,
+             pooling=None,
+             classes=1000,
+             **kwargs):
+    def stack_fn(x):
+        x = stack1(x, 64, 2, stride1=1, dilation_rate=2,  name='conv2')
+        x = stack1(x, 128, 2, stride1=2, dilation_rate=2, name='conv3')
+        x = stack1(x, 256, 2, stride1=2, dilation_rate=2, name='conv4')
+        x = stack1(x, 512, 2, stride1=1, dilation_rate=4, name='conv5')
+        return x
+    return ResNet(stack_fn, False, True, 'resnet18',
+                  include_top, weights,
+                  input_tensor, input_shape,
+                  pooling, classes,
+                  **kwargs)
+
 
 def ResNet50Dilated(include_top=True,
              weights='imagenet',
