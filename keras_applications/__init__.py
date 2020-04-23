@@ -5,13 +5,14 @@ from __future__ import division
 from __future__ import print_function
 
 from tensorflow.python import keras
+from tensorflow.keras import utils
 
 # import tensorflow.python.keras as keras
 # import keras
 _KERAS_BACKEND = keras.backend
 _KERAS_LAYERS = keras.layers
 _KERAS_MODELS = keras.models
-_KERAS_UTILS = keras.utils
+_KERAS_UTILS = utils
 
 
 
@@ -29,7 +30,7 @@ def set_keras_submodules(backend=None,
     backend = keras.backend
     layers = keras.layers
     models = keras.models
-    utils = keras.utils
+    utils = utils
     _KERAS_BACKEND = backend
     _KERAS_LAYERS = layers
     _KERAS_MODELS = models
@@ -74,7 +75,7 @@ def get_submodules_from_kwargs(kwargs):
     backend = keras.backend
     layers = keras.layers
     models = keras.models
-    utils = keras.utils
+    utils = utils
     for key in kwargs.keys():
         if key not in ['backend', 'layers', 'models', 'utils']:
             raise TypeError('Invalid keyword argument: %s', key)
