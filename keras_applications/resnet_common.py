@@ -81,13 +81,13 @@ def block1(x, filters, kernel_size=3, stride=1,
     if conv_shortcut is True:
         shortcut = layers.Conv2D(4 * filters, 1, strides=stride,
                                  name=name + '_0_conv')(x)
-        shortcut = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+        shortcut = bn(axis=bn_axis, epsilon=1.001e-5,
                                              name=name + '_0_bn')(shortcut)
     else:
         shortcut = x
 
     x = layers.Conv2D(filters, 1, strides=stride,  name=name + '_1_conv')(x)
-    x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+    x = bn(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_1_bn')(x)
     x = layers.Activation('relu', name=name + '_1_relu')(x)
 
@@ -95,12 +95,12 @@ def block1(x, filters, kernel_size=3, stride=1,
                       dilation_rate=dilation_rate,
                       strides=stride_dilation,
                       name=name + '_2_conv')(x)
-    x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+    x = bn(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_2_bn')(x)
     x = layers.Activation('relu', name=name + '_2_relu')(x)
 
     x = layers.Conv2D(4 * filters, 1, name=name + '_3_conv')(x)
-    x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+    x = bn(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_3_bn')(x)
 
     x = layers.Add(name=name + '_add')([shortcut, x])
@@ -151,7 +151,7 @@ def block2(x, filters, kernel_size=3, stride=1,
     """
     bn_axis = 3 if backend.image_data_format() == 'channels_last' else 1
 
-    preact = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+    preact = bn(axis=bn_axis, epsilon=1.001e-5,
                                        name=name + '_preact_bn')(x)
     preact = layers.Activation('relu', name=name + '_preact_relu')(preact)
 
@@ -163,14 +163,14 @@ def block2(x, filters, kernel_size=3, stride=1,
 
     x = layers.Conv2D(filters, 1, strides=1, use_bias=False,
                       name=name + '_1_conv')(preact)
-    x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+    x = bn(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_1_bn')(x)
     x = layers.Activation('relu', name=name + '_1_relu')(x)
 
     x = layers.ZeroPadding2D(padding=((1, 1), (1, 1)), name=name + '_2_pad')(x)
     x = layers.Conv2D(filters, kernel_size, strides=stride,
                       use_bias=False, name=name + '_2_conv')(x)
-    x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+    x = bn(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_2_bn')(x)
     x = layers.Activation('relu', name=name + '_2_relu')(x)
 
@@ -221,13 +221,13 @@ def block3(x, filters, kernel_size=3, stride=1, groups=32,
     if conv_shortcut is True:
         shortcut = layers.Conv2D((64 // groups) * filters, 1, strides=stride,
                                  use_bias=False, name=name + '_0_conv')(x)
-        shortcut = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+        shortcut = bn(axis=bn_axis, epsilon=1.001e-5,
                                              name=name + '_0_bn')(shortcut)
     else:
         shortcut = x
 
     x = layers.Conv2D(filters, 1, use_bias=False, name=name + '_1_conv')(x)
-    x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+    x = bn(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_1_bn')(x)
     x = layers.Activation('relu', name=name + '_1_relu')(x)
 
@@ -241,13 +241,13 @@ def block3(x, filters, kernel_size=3, stride=1, groups=32,
     x = layers.Lambda(lambda x: sum([x[:, :, :, :, i] for i in range(c)]),
                       output_shape=output_shape, name=name + '_2_reduce')(x)
     x = layers.Reshape(x_shape + (filters,))(x)
-    x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+    x = bn(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_2_bn')(x)
     x = layers.Activation('relu', name=name + '_2_relu')(x)
 
     x = layers.Conv2D((64 // groups) * filters, 1,
                       use_bias=False, name=name + '_3_conv')(x)
-    x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+    x = bn(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_3_bn')(x)
 
     x = layers.Add(name=name + '_add')([shortcut, x])
@@ -287,6 +287,7 @@ def ResNet(stack_fn,
            pooling=None,
            classes=1000,
            initial_strides=2,
+           batch_normalization=None,
            **kwargs):
     """Instantiates the ResNet, ResNetV2, and ResNeXt architecture.
 
@@ -337,8 +338,13 @@ def ResNet(stack_fn,
         ValueError: in case of invalid argument for `weights`,
             or invalid input shape.
     """
-    global backend, layers, models, keras_utils
+    global backend, layers, models, keras_utils, bn
     backend, layers, models, keras_utils = get_submodules_from_kwargs(kwargs)
+    
+    if batch_normalization is None:
+        bn = layers.BatchNormalization
+    else:
+        bn = batch_normalization
 
     if not (weights in {'imagenet', None} or os.path.exists(weights)):
         raise ValueError('The `weights` argument should be either '
@@ -372,7 +378,7 @@ def ResNet(stack_fn,
     x = layers.Conv2D(64, 7, strides=initial_strides, use_bias=use_bias, name='conv1_conv')(x)
 
     if preact is False:
-        x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+        x = bn(axis=bn_axis, epsilon=1.001e-5,
                                       name='conv1_bn')(x)
         x = layers.Activation('relu', name='conv1_relu')(x)
 
@@ -382,7 +388,7 @@ def ResNet(stack_fn,
     x = stack_fn(x)
 
     if preact is True:
-        x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
+        x = bn(axis=bn_axis, epsilon=1.001e-5,
                                       name='post_bn')(x)
         x = layers.Activation('relu', name='post_relu')(x)
 
