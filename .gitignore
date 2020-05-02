@@ -10,3 +10,4 @@ Keras_Applications.egg-info
 .coverage
 .cache
 .pytest_cache
+.ipynb_checkpoints
